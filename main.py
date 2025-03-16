@@ -2,9 +2,13 @@
 
 # Imports
 from config import *
+import os
 
 # Global variables
+agility = 0
+smarts = 0
 spirit = 0
+strength = 0
 vigor = 0
 athletics = 0
 fighting = 0
@@ -19,14 +23,19 @@ base_toughness = vigor / 2 + 2
 total_toughness = base_toughness + armor_value
 
 def player_inputs():
-    print("For the following prompts, enter the numer corresponding to the die type.")
+    print("Enter your Traits (attributes and skills):")
+    print("Enter the number corresponding to the die type of each trait.")
     print("Example: to enter a d4, just type the number 4.")
+    agility = input ("What is your Agility attribute?: ")
+    smarts = input ("What is your Smarts attribute?: ")
     spirit = input("What is your Spirit attribute?: ")
+    strength = input ("What is your Strength attribute?: ")
     vigor = input("What is your Vigor attribute?: ")
     athletics = input("What is your Athletics skill?: ")
     fighting = input("What is your Fighting skill?: ")
     shooting = input("What is your Shooting skill?: ")
     armor_value = input("Enter your armor value (0 for none): ")
+    return agility, smarts, spirit, strength, vigor, athletics, fighting, shooting, armor_value
 
 def opponent_inputs():
     print("For the following prompts, enter just the number.")
@@ -39,12 +48,14 @@ def type_of_attack():
     print("   1. Melee\n   2. Throwing\n   3. Ranged\n")
     attack_type = input("Enter 1, 2, or 3: ")
     if attack_type == "1":
+        melee_attack()
     elif attack_type == "2":
-    elif attack_type == "3":    
-
+        throwing_attack()
+    elif attack_type == "3":
+        ranged_attack()
     else:
         print("Please enter 1, 2, or 3...")
-        define_attack()
+        type_of_attack()
 
 def melee_attack():
     defense_value = opponent_parry
@@ -63,3 +74,16 @@ def ranged_attack():
 def throwing_attack():
     defense_value = base_difficulty
     attack_value = athletics
+
+
+
+# Step 1: Take player inputs
+player = player_inputs()
+agility, smarts, spirit, strength, vigor, athletics, fighting, shooting, armor_value
+print(f"Attributes: Agility: d{player[0]}, Smarts: d{player[1]}, Spirit: d{player[2]}, Strength: d{player[3]}, Vigor: d{player[4]}\nSkills: Athletics: d{player[5]}, Fighting: d{player[6]}, Shooting: d{player[7]}\nArmor: {player[8]}")
+# Step 2: Display current values and prompt to start combat loop
+# Step 3: Initiate combat loop and prompt for opponent data
+# Step 4: Select player attack or player defense
+# Step 5: Prompt for type of attack and any relevant parameters
+# Step 6: Print attack resolution step-by-step
+# Step 7: Return to Step 4
