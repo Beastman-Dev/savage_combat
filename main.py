@@ -4,23 +4,62 @@
 from config import *
 import os
 
+class Player:
+    def __init__(self, attributes: dict, skills: dict, armor_value: int) -> None:
+        self.attributes = attributes
+        self.skills = skills
+        self.armor_value = armor_value
+
+class Game:
+    def __init__(self):
+        pass
+
+    def player_inputs(self):
+        attributes = {}
+        skills = {}
+        print("Enter your Traits (attributes and skills):")
+        print("Enter the number corresponding to the die type of each trait.")
+        print("Example: to enter a d4, just type the number 4.")
+        attributes("agility") = input ("What is your Agility attribute?: ")
+        attributes("smarts") = input ("What is your Smarts attribute?: ")
+        attributes("spirit") = input("What is your Spirit attribute?: ")
+        attributes("strength") = input ("What is your Strength attribute?: ")
+        attributes("vigor") = input("What is your Vigor attribute?: ")
+        skills("athletics") = input("What is your Athletics skill?: ")
+        skills("fighting") = input("What is your Fighting skill?: ")
+        skills("shooting") = input("What is your Shooting skill?: ")
+        armor_value = input("Enter your armor value (0 for none): ")
+        self.player: Player = Player(attributes, skills, armor_value)
+
 # Global variables
 agility = 0
-smarts = 0
-spirit = 0
-strength = 0
-vigor = 0
-athletics = 0
-fighting = 0
-shooting = 0
-armor_value = 0
+smarts = 1
+spirit = 2
+strength = 3
+vigor = 4
+athletics = 5
+fighting = 6
+shooting = 7
+armor_value = 8
 opponent_parry = 0
-opponent_toughness = 0
+opponent_toughness = 1
 
 # Calculated values
 parry = fighting / 2 + 2
 base_toughness = vigor / 2 + 2
 total_toughness = base_toughness + armor_value
+
+def test_player():
+    agility = 10
+    smarts = 6
+    spirit = 8
+    strength = 6
+    vigor = 6
+    athletics = 8
+    fighting = 10
+    shooting = 8
+    armor_value = 2
+    return agility, smarts, spirit, strength, vigor, athletics, fighting, shooting, armor_value
 
 def player_inputs():
     print("Enter your Traits (attributes and skills):")
@@ -78,7 +117,7 @@ def throwing_attack():
 
 
 # Step 1: Take player inputs
-player = player_inputs()
+player = test_player()
 agility, smarts, spirit, strength, vigor, athletics, fighting, shooting, armor_value
 print(f"Attributes: Agility: d{player[0]}, Smarts: d{player[1]}, Spirit: d{player[2]}, Strength: d{player[3]}, Vigor: d{player[4]}\nSkills: Athletics: d{player[5]}, Fighting: d{player[6]}, Shooting: d{player[7]}\nArmor: {player[8]}")
 # Step 2: Display current values and prompt to start combat loop
