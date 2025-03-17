@@ -26,19 +26,29 @@ class Combat:
         self.player = player
         self.opponent = opponent
 
+    # Rolling die with explosions
+    def roll_die(self, die_type: int) -> int:
+        roll = random.randint(1, die_type)
+        if roll == die_type:
+            roll += roll_die(die_type)
+        return roll
+
     def attack_values(self, attack_type: str, adjacent = False) -> tuple:
         if attack_type == "melee":
-            self.attack_value = self.player.skills["fighting"]
-            self.defense_value = self.opponent.parry
+            attack_value = self.player.skills["fighting"]
+            defense_value = self.opponent.parry
         elif attack_type == "throwing":
-            self.attack_value = self.player.skills["athletics"]
-            self.defense_value = 4
+            attack_value = self.player.skills["athletics"]
+            defense_value = 4
         elif attack_type == "ranged":
-            self.attack_value = self.player.skills["shooting"]
+            attack_value = self.player.skills["shooting"]
             if adjacent:
-                self.defense_value = self.opponent.parry
+                defense_value = self.opponent.parry
             else:
-                self.defense_value = 4
+                defense_value = 4
+        else:
+            raise ValueError("Invalid attack type. Use 'melee', 'throwing', or 'ranged'")
+        return attack_value, defense_value
 
     def attack_resolution(self, attack_value: int, defense_value: int) -> int:
         if attack_value >= defense_value + 4:
@@ -49,39 +59,31 @@ class Combat:
             return 0
 
     def calculate_damage(self, dice_notation: str) -> int:
-        """
-        Rolls dice based on the provided dice notation.
-        For example, "2d6+2" means roll two 6-sided dice and add 2.
-        """
         # Use a regular expression to parse the dice notation
         pattern = r'(\d+)d(\d+)([+-]\d+)?'
         match = re.fullmatch(pattern, dice_notation.strip())
-        
+
         if not match:
             raise ValueError("Invalid dice notation. Use format like '2d6+2'")
-        
+
         # Extract the number of dice, the number of sides, and the modifier
+        # Set the total starting value to the modifier (or 0 if no modifier)
         num_dice = int(match.group(1))
         sides = int(match.group(2))
-        modifier = int(match.group(3)) if match.group(3) else 0
+        total = int(match.group(3)) if match.group(3) else 0
 
-        # Roll the dice
-        total = sum(random.randint(1, sides) for _ in range(num_dice)) + modifier
+        # Roll the dice and add the modifier
+        for i in range(num_dice):
+            roll = self.roll_die(sides)
+            total += roll
         return total
+
+    
 
 class Game:
     def __init__(self):
         pass
 
-    # Rolling trait die and wild die with explosions
-    def roll_die(self, die_type: int) -> tuple:
-        roll = random.randint(1, die_type)
-        if roll == die_type:
-            roll += roll_die(die_type)
-        wild = random.randint(1, 6)
-        if wild == 6:
-            wild += roll_die(6)
-        return roll, wild
 
     def type_of_attack():
         print("What type of attack?:\n")
