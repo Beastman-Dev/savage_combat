@@ -19,6 +19,7 @@ class Combatant:
         self.parry = int(self.fighting) / 2 + 2
         self.toughness = int(self.vigor) / 2 + 2
         self.status = "Uninjured"
+        self.wounds = 0
         self.attributes = {"spirit": self.spirit, "vigor": self.vigor}
         self.skills = {"athletics": self.athletics, "fighting": self.fighting, "shooting": self.shooting}
         self.defenses = {"parry": self.parry, "toughness": self.toughness, "armor": self.armor_value}
@@ -97,6 +98,11 @@ class Combat:
             total += roll
         return total
 
+    def damage_effect(self, damage: int) -> str:
+        if damage >= self.opponent.toughness and self.opponent.status != "Shaken":
+            self.opponent.status = "Shaken"
+            return "Shaken"
+        
 
 class Game:
     def __init__(self):
@@ -164,6 +170,34 @@ class Game:
     def create_combat(self):
         combat = Combat(self.player, self.opponent)
         return combat
+
+
+def resolve_attack():
+    attack_type = input("Enter the type of attack (melee, throwing, or ranged): ")
+    if attack_type not in ["melee", "throwing", "ranged"]:
+        print("Invalid attack type. Please enter 'melee', 'throwing', or 'ranged'.")
+        resolve_attack()
+    if attack_type == "ranged":
+        adjacent = input("Is the opponent adjacent? (y/n): ")
+        if adjacent == "y":
+            adjacent = True
+        else:
+            adjacent = False
+    attack_values = combat.attack_values(attack_type, adjacent)
+    attack_value = attack_values[0]
+    defense_value = attack_values[1]
+    result = combat.attack_resolution(attack_value, defense_value)
+    if result == 2:
+        print("Attack hits with a raise!")
+    elif result == 1:
+        print("Attack hits!")
+    else:
+        print("Attack misses.")
+    if result > 0:
+        damage = input("Enter the damage dice notation (e.g. 2d6+2): ")
+        total_damage = combat.calculate_damage(damage)
+        print(f"Total damage: {total_damage}")
+    return result
 
 game = Game()
 game.player_inputs()
