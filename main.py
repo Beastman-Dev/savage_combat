@@ -5,22 +5,35 @@ from config import *
 import re
 import random
 
-class Player:
-    def __init__(self, attributes: dict, skills: dict, armor_value: int) -> None:
-        self.attributes = attributes
-        self.skills = skills
-        self.armor_value = armor_value
-        self.parry = self.skills["fighting"] / 2 + 2
-        self.toughness = self.attributes["vigor"] / 2 + 2
+# Classes
 
-class Opponent:
-    def __init__(self, parry: int, toughness: int, armor_value: int) -> None:
-        self.parry = parry
-        self.toughness = toughness
+class Combatant:
+    def __init__(self, name: str, spirit: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
+        self.name = name
+        self.spirit = spirit
+        self.vigor = vigor
+        self.athletics = athletics
+        self.fighting = fighting
+        self.shooting = shooting
         self.armor_value = armor_value
+        self.parry = self.fighting / 2 + 2
+        self.toughness = self.vigor / 2 + 2
+        self.status = "Uninjured"
+        self.attributes = {"spirit": self.spirit, "vigor": self.vigor}
+        self.skills = {"athletics": self.athletics, "fighting": self.fighting, "shooting": self.shooting}
+        self.defenses = {"parry": self.parry, "toughness": self.toughness, "armor": self.armor_value}
+
+class Player(Combatant):
+    def __init__(self, name: str, agility: int, smarts: int, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
+        super().__init__(name, spirit, vigor, athletics, fighting, shooting, armor_value)
+        self.agility = agility
+        self.smarts = smarts
+        self.strength = strength
+        self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
+
 
 class Combat:
-    def __init__(self, player: Player, opponent: Opponent) -> None:
+    def __init__(self, player: Player, opponent: Combatant) -> None:
         self.player = player
         self.opponent = opponent
 
@@ -28,18 +41,26 @@ class Combat:
     def roll_die(self, die_type: int) -> int:
         roll = random.randint(1, die_type)
         if roll == die_type:
-            roll += roll_die(die_type)
+            roll += self.roll_die(die_type)
         return roll
+
+    def result_selection(self, trait_value: int) -> int:
+        trait_roll = self.roll_die(trait_value)
+        wild_die = self.roll_die(6)
+        if wild_die > trait_roll:
+            return wild_die
+        else:
+            return trait_roll
 
     def attack_values(self, attack_type: str, adjacent = False) -> tuple:
         if attack_type == "melee":
-            attack_value = self.player.skills["fighting"]
+            attack_value = self.result_selection(self.player.skills["fighting"])
             defense_value = self.opponent.parry
         elif attack_type == "throwing":
-            attack_value = self.player.skills["athletics"]
+            attack_value = self.result_selection(self.player.skills["athletics"])
             defense_value = 4
         elif attack_type == "ranged":
-            attack_value = self.player.skills["shooting"]
+            attack_value = self.result_selection(self.player.skills["shooting"])
             if adjacent:
                 defense_value = self.opponent.parry
             else:
@@ -76,74 +97,73 @@ class Combat:
             total += roll
         return total
 
-    
 
 class Game:
     def __init__(self):
         pass
 
+    # Create player and opponent objects
 
-    def type_of_attack():
-        print("What type of attack?:\n")
-        print("   1. Melee\n   2. Throwing\n   3. Ranged\n")
-        attack_type = input("Enter 1, 2, or 3: ")
-        if attack_type == "1":
-            melee_attack()
-        elif attack_type == "2":
-            throwing_attack()
-        elif attack_type == "3":
-            ranged_attack()
-        else:
-            print("Please enter 1, 2, or 3...")
-            type_of_attack()
+    # Collect player inputs    
+    def player_inputs(self):
+        name = input("Enter your character's name: ")
+        if not name:
+            name = "Player"
+        agility = input ("Agility: ")
+        if not agility:
+            agility = 6
+        smarts = input ("Smarts: ")
+        if not smarts:
+            smarts = 6
+        spirit = input("Spirit: ")
+        if not spirit:
+            spirit = 6
+        strength = input ("Strength: ")
+        if not strength:
+            strength = 6
+        vigor = input("Vigor: ")
+        if not vigor:
+            vigor = 6
+        athletics = input("Athletics: ")
+        if not athletics:
+            athletics = 6
+        fighting = input("Fighting: ")
+        if not fighting:
+            fighting = 6
+        shooting = input("Shooting: ")
+        if not shooting:
+            shooting = 6
+        armor_value = input("Armor Value: ")
+        if not armor_value:
+            armor_value = 0
+        self.player: Player = Player(name, agility, smarts, spirit, strength, vigor, athletics, fighting, shooting, armor_value)
 
-    def melee_attack():
-        defense_value = opponent_parry
-        attack_value = fighting
+    # Collect opponent inputs (sets default values if none are provided)
+    def opponent_inputs(self):
+        name = input("Enter your opponent's name: ")
+        if not name:
+            name = "Opponent"
+        spirit = input("Spirit: ")
+        if not spirit:
+            spirit = 6
+        vigor = input("Vigor: ")
+        if not vigor:
+            vigor = 6
+        athletics = input("Athletics: ")
+        if not athletics:
+            athletics = 6
+        fighting = input("Fighting: ")
+        if not fighting:
+            fighting = 6
+        shooting = input("Shooting: ")
+        if not shooting:
+            shooting = 6
+        armor = input("Armor Value: ")
+        self.opponent: Combatant = Combatant(name, spirit, vigor, athletics, fighting, shooting, armor)
 
-    def ranged_attack():
-        adjacent = input("Is the target of your attack adjacent to you (Y/N)?: ")
-        if adjacent == "Y":
-            defense_value = opponent_parry
-        elif adjacent == "N":
-            defense_value = base_difficulty
-        else:
-            print("Please enter Y or N...")
-            ranged_attack()
-
-    def throwing_attack():
-        defense_value = base_difficulty
-        attack_value = athletics
-
-def test_combatants(self):
-    self.player = Player({"agility": 10, "smarts": 6, "spirit": 8, "strength": 6, "vigor": 6}, {"athletics": 8, "fighting": 10, "shooting": 8}, 2)
-    self.opponent = Opponent(5, 5, 2)
-
-def player_inputs(self):
-    attributes = {}
-    skills = {}
-    print("Enter your Traits (attributes and skills):")
-    print("Enter the number corresponding to the die type of each trait.")
-    print("Example: to enter a d4, just type the number 4.")
-    attributes("agility") = input ("What is your Agility attribute?: ")
-    attributes("smarts") = input ("What is your Smarts attribute?: ")
-    attributes("spirit") = input("What is your Spirit attribute?: ")
-    attributes("strength") = input ("What is your Strength attribute?: ")
-    attributes("vigor") = input("What is your Vigor attribute?: ")
-    skills("athletics") = input("What is your Athletics skill?: ")
-    skills("fighting") = input("What is your Fighting skill?: ")
-    skills("shooting") = input("What is your Shooting skill?: ")
-    armor_value = input("Enter your armor value (0 for none): ")
-    self.player: Player = Player(attributes, skills, armor_value)
-
-def opponent_inputs(self):
-    print("For the following prompts, enter just the number.")
-    print("Note: this is optional, so if you don't know just hit [Enter].")
-    opponent_parry = input("What is your opponent's parry?: ")
-    opponent_toughness = input("What is your opponent's toughness?: ")
-    opponent_armor = input("What is your opponent's armor value?: ")
-    self.opponent: Opponent = Opponent(opponent_parry, opponent_toughness, opponent_armor)
-
+    def create_combat(self):
+        combat = Combat(self.player, self.opponent)
+        return combat
 
 
 # Step 1: Initialize game and collect player inputs
