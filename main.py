@@ -3,6 +3,7 @@
 # Imports
 from config import *
 import os
+import re
 import random
 
 class Player:
@@ -39,7 +40,7 @@ class Combat:
             else:
                 self.defense_value = 4
 
-    def attack(self, attack_value: int, defense_value: int) -> int:
+    def attack_resolution(self, attack_value: int, defense_value: int) -> int:
         if attack_value >= defense_value + 4:
             return 2
         elif attack_value >= defense_value:
@@ -47,7 +48,26 @@ class Combat:
         else:
             return 0
 
+    def calculate_damage(self, dice_notation: str) -> int:
+        """
+        Rolls dice based on the provided dice notation.
+        For example, "2d6+2" means roll two 6-sided dice and add 2.
+        """
+        # Use a regular expression to parse the dice notation
+        pattern = r'(\d+)d(\d+)([+-]\d+)?'
+        match = re.fullmatch(pattern, dice_notation.strip())
+        
+        if not match:
+            raise ValueError("Invalid dice notation. Use format like '2d6+2'")
+        
+        # Extract the number of dice, the number of sides, and the modifier
+        num_dice = int(match.group(1))
+        sides = int(match.group(2))
+        modifier = int(match.group(3)) if match.group(3) else 0
 
+        # Roll the dice
+        total = sum(random.randint(1, sides) for _ in range(num_dice)) + modifier
+        return total
 
 class Game:
     def __init__(self):
