@@ -16,8 +16,8 @@ class Combatant:
         self.fighting = fighting
         self.shooting = shooting
         self.armor_value = armor_value
-        self.parry = self.fighting / 2 + 2
-        self.toughness = self.vigor / 2 + 2
+        self.parry = int(self.fighting) / 2 + 2
+        self.toughness = int(self.vigor) / 2 + 2
         self.status = "Uninjured"
         self.attributes = {"spirit": self.spirit, "vigor": self.vigor}
         self.skills = {"athletics": self.athletics, "fighting": self.fighting, "shooting": self.shooting}
@@ -165,6 +165,12 @@ class Game:
         combat = Combat(self.player, self.opponent)
         return combat
 
+game = Game()
+game.player_inputs()
+game.opponent_inputs()
+combat = game.create_combat()
+print(combat.player.name)
+print(combat.opponent.name)
 
 # Step 1: Initialize game and collect player inputs
 # Step 2: Display current values and prompt to start combat loop
