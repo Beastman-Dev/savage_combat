@@ -2,7 +2,6 @@
 
 # Imports
 from config import *
-import os
 import re
 import random
 
@@ -12,8 +11,7 @@ class Player:
         self.skills = skills
         self.armor_value = armor_value
         self.parry = self.skills["fighting"] / 2 + 2
-        self.base_toughness = self.attributes["vigor"] / 2 + 2
-        self.total_toughness = self.base_toughness + self.armor_value
+        self.toughness = self.attributes["vigor"] / 2 + 2
 
 class Opponent:
     def __init__(self, parry: int, toughness: int, armor_value: int) -> None:
