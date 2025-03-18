@@ -4,6 +4,7 @@
 from config import *
 import re
 import random
+import math
 
 # Classes
 
@@ -99,9 +100,19 @@ class Combat:
         return total
 
     def damage_effect(self, damage: int) -> str:
-        if damage >= self.opponent.toughness and self.opponent.status != "Shaken":
+        wounds = math.floor((damage - self.opponent.toughness) / 4)
+        self.opponent.wounds += wounds
+        if self.opponent.wounds >= 4:
+            self.opponent.status = "Incapacitated"
+        elif wounds == 0 and self.opponent.status == "Shaken":
+            self.opponent.wounds += 1
+            if self.opponent.wounds >= 4:
+                self.opponent.status = "Incapacitated"
+        elif wounds >= 0:
             self.opponent.status = "Shaken"
-            return "Shaken"
+        if self.opponent.wounds >=1 and self.opponent.status == "Uninjured":
+            self.opponent.status = "Wounded"
+        return self.opponent.status
         
 
 class Game:
