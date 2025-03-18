@@ -71,13 +71,24 @@ class Combat:
             raise ValueError("Invalid attack type. Use 'melee', 'throwing', or 'ranged'")
         return attack_value, defense_value
 
-    def attack_resolution(self, attack_value: int, defense_value: int) -> int:
+    def attack_resolution(self, attack_type: str, adjacent = False) -> int:
+        attack_values = self.attack_values(attack_type, adjacent)
+        attack_value = attack_values[0]
+        defense_value = attack_values[1]
         if attack_value >= defense_value + 4:
             return 2
         elif attack_value >= defense_value:
             return 1
         else:
             return 0
+
+    # def attack_resolution(self, attack_value: int, defense_value: int) -> int:
+    #     if attack_value >= defense_value + 4:
+    #         return 2
+    #     elif attack_value >= defense_value:
+    #         return 1
+    #     else:
+    #         return 0
 
     def calculate_damage(self, dice_notation: str) -> int:
         # Use a regular expression to parse the dice notation
