@@ -9,7 +9,7 @@ import math
 # Classes
 
 class Combatant:
-    def __init__(self, name: str, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
+    def __init__(self, name: str, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int = 0) -> None:
         self.name = name
         self.spirit = spirit
         self.strength = strength
