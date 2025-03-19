@@ -9,9 +9,10 @@ import math
 # Classes
 
 class Combatant:
-    def __init__(self, name: str, spirit: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
+    def __init__(self, name: str, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
         self.name = name
         self.spirit = spirit
+        self.strength = strength
         self.vigor = vigor
         self.athletics = athletics
         self.fighting = fighting
@@ -21,40 +22,45 @@ class Combatant:
         self.toughness = int(self.vigor) / 2 + 2
         self.status = "Uninjured"
         self.wounds = 0
-        self.attributes = {"spirit": self.spirit, "vigor": self.vigor}
+        self.attributes = {"spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
         self.skills = {"athletics": self.athletics, "fighting": self.fighting, "shooting": self.shooting}
         self.defenses = {"parry": self.parry, "toughness": self.toughness, "armor": self.armor_value}
+        self.attacks = {"unarmed": (fighting, strength, 0)}
+
+    def add_attack(self, attack_name: str, skill: int, damage: str, armor_piercing: int = 0) -> None:
+        self.attacks[attack_name] = (skill, damage, armor_piercing)
 
 class Player(Combatant):
     def __init__(self, name: str, agility: int, smarts: int, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
-        super().__init__(name, spirit, vigor, athletics, fighting, shooting, armor_value)
+        super().__init__(name, spirit, strength, vigor, athletics, fighting, shooting, armor_value)
         self.agility = agility
         self.smarts = smarts
-        self.strength = strength
         self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
 
+    def trait_roll(self, trait: int) -> int:
+        return Die.roll_die(self.trait, True)
+
+class Die:
+    def __init__(self, sides: int, wild_die: bool = False) -> int:
+        self.sides = sides
+        self.wild_die = wild_die
+    
+    def roll_die(self) -> int:
+        roll = random.randint(1, self.sides)
+        if roll == self.sides:
+            roll += self.roll_die()
+        if self.wild_die:
+            wild_roll = random.randint(1, 6)
+            if wild_roll > roll:
+                roll = wild_roll
+        return roll
 
 class Combat:
     def __init__(self, player: Player, opponent: Combatant) -> None:
         self.player = player
         self.opponent = opponent
 
-    # Rolling die with explosions
-    def roll_die(self, die_type: int) -> int:
-        roll = random.randint(1, die_type)
-        if roll == die_type:
-            roll += self.roll_die(die_type)
-        return roll
-
-    def result_selection(self, trait_value: int) -> int:
-        trait_roll = self.roll_die(trait_value)
-        wild_die = self.roll_die(6)
-        if wild_die > trait_roll:
-            return wild_die
-        else:
-            return trait_roll
-
-    def attack_values(self, attack_type: str, adjacent = False) -> tuple:
+    def attack_values(self, attack_type: str, adjacent: bool = False) -> tuple:
         if attack_type == "melee":
             attack_value = self.result_selection(self.player.skills["fighting"])
             defense_value = self.opponent.parry
@@ -81,14 +87,6 @@ class Combat:
             return 1
         else:
             return 0
-
-    # def attack_resolution(self, attack_value: int, defense_value: int) -> int:
-    #     if attack_value >= defense_value + 4:
-    #         return 2
-    #     elif attack_value >= defense_value:
-    #         return 1
-    #     else:
-    #         return 0
 
     def calculate_damage(self, dice_notation: str) -> int:
         # Use a regular expression to parse the dice notation
@@ -194,39 +192,16 @@ class Game:
         return combat
 
 
-def resolve_attack():
-    attack_type = input("Enter the type of attack (melee, throwing, or ranged): ")
-    if attack_type not in ["melee", "throwing", "ranged"]:
-        print("Invalid attack type. Please enter 'melee', 'throwing', or 'ranged'.")
-        resolve_attack()
-    if attack_type == "ranged":
-        adjacent = input("Is the opponent adjacent? (y/n): ")
-        if adjacent == "y":
-            adjacent = True
-        else:
-            adjacent = False
-    attack_values = combat.attack_values(attack_type, adjacent)
-    attack_value = attack_values[0]
-    defense_value = attack_values[1]
-    result = combat.attack_resolution(attack_value, defense_value)
-    if result == 2:
-        print("Attack hits with a raise!")
-    elif result == 1:
-        print("Attack hits!")
-    else:
-        print("Attack misses.")
-    if result > 0:
-        damage = input("Enter the damage dice notation (e.g. 2d6+2): ")
-        total_damage = combat.calculate_damage(damage)
-        print(f"Total damage: {total_damage}")
-    return result
 
-game = Game()
-game.player_inputs()
-game.opponent_inputs()
-combat = game.create_combat()
-print(combat.player.name)
-print(combat.opponent.name)
+# for i in range(10):
+#     print(f"Rolling a d4: {Die(4).roll_die()}")
+
+# game = Game()
+# game.player_inputs()
+# game.opponent_inputs()
+# combat = game.create_combat()
+# print(combat.player.name)
+# print(combat.opponent.name)
 
 # Step 1: Initialize game and collect player inputs
 # Step 2: Display current values and prompt to start combat loop
