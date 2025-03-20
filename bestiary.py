@@ -10,5 +10,6 @@ goblin = {
     "special_abilities": {"Infravision": "Halve penalties for Illumination when attacking warm targets", "Size": "-1"}
     }
 
-
+short_spear = ["Short Spear", "melee", (1, 4, 0), 0]
+short_bow = ["Short Bow", "ranged", (2, 6, 0), 0]
 

@@ -8,7 +8,7 @@ import math
 
 # Classes
 
-class Combatant:
+class Creature:
     def __init__(self, name: str, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int = 0) -> None:
         self.name = name
         self.spirit = spirit
@@ -22,34 +22,33 @@ class Combatant:
         self.toughness = int(self.vigor) / 2 + 2
         self.status = "Uninjured"
         self.wounds = 0
-        self.attributes = {"spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
-        self.skills = {"athletics": self.athletics, "fighting": self.fighting, "shooting": self.shooting}
-        self.defenses = {"parry": self.parry, "toughness": self.toughness, "armor": self.armor_value}
-        self.attacks = {"unarmed": (fighting, strength, 0)}
+        # self.attributes = {"spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
+        # self.skills = {"athletics": self.athletics, "fighting": self.fighting, "shooting": self.shooting}
+        # self.defenses = {"parry": self.parry, "toughness": self.toughness, "armor": self.armor_value}
+        self.attacks = {"unarmed": ("melee", (0,0,0), 0)}
 
-    def add_attack(self, attack_name: str, skill: int, damage: str, armor_piercing: int = 0) -> None:
-        self.attacks[attack_name] = (skill, damage, armor_piercing)
-
-class Player(Combatant):
-    def __init__(self, name: str, agility: int, smarts: int, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
-        super().__init__(name, spirit, strength, vigor, athletics, fighting, shooting, armor_value)
-        self.agility = agility
-        self.smarts = smarts
-        self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
+    def add_attack(self, attack_name: str, attack_type: str, damage: tuple, armor_piercing: int = 0) -> None:
+        self.attacks[attack_name] = (attack_type, damage, armor_piercing)
 
     def trait_roll(self, trait: int) -> int:
         self.trait = trait
         return Die.roll_die(self.trait, True)
     
-    def damage_roll(self, dice_count: int = 1, dice_sides: int, modifier: int = 0) -> int:
-        self.dice_count = dice_count
-        self.dice_sides = dice_sides
-        self.modifier = modifier
+    def damage_roll(self, attack_type: str, dice_count: int, dice_sides: int, modifier: int = 0) -> int:
         total_damage = 0
-        for i in range(self.dice_count):
-            total_damage += Die.roll_die(self.dice_sides)
-        total_damage += self.modifier
+        for i in range(dice_count):
+            total_damage += Die.roll_die(dice_sides)
+        if attack_type == "melee":
+            total_damage += self.trait_roll(self.strength)
+        total_damage += modifier
         return total_damage
+
+class Player(Creature):
+    def __init__(self, name: str, agility: int, smarts: int, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
+        super().__init__(name, spirit, strength, vigor, athletics, fighting, shooting, armor_value)
+        self.agility = agility
+        self.smarts = smarts
+        self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
 
 class Die:
     def __init__(self, sides: int, wild_die: bool = False) -> int:
@@ -67,7 +66,7 @@ class Die:
         return roll
 
 class Combat:
-    def __init__(self, player: Player, opponent: Combatant) -> None:
+    def __init__(self, player: Player, opponent: Creature) -> None:
         self.player = player
         self.opponent = opponent
 
@@ -196,13 +195,13 @@ class Game:
         if not shooting:
             shooting = 6
         armor = input("Armor Value: ")
-        self.opponent: Combatant = Combatant(name, spirit, vigor, athletics, fighting, shooting, armor)
+        self.opponent: Creature = Creature(name, spirit, vigor, athletics, fighting, shooting, armor)
 
     def create_combat(self):
         combat = Combat(self.player, self.opponent)
         return combat
 
-goblin_grunt: Combatant = Combatant("Goblin Grunt", 6, 4, 6, 6, 6, 8)
+goblin_grunt: Creature = Creature("Goblin Grunt", 6, 4, 6, 6, 6, 8)
 
 # for i in range(10):
 #     print(f"Rolling a d4: {Die(4).roll_die()}")
