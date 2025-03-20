@@ -27,13 +27,35 @@ class Creature:
         # self.defenses = {"parry": self.parry, "toughness": self.toughness, "armor": self.armor_value}
         self.attacks = {"unarmed": ("melee", (0,0,0), 0)}
 
+    # Function for adding an attack to the dictionary of attacks for a specified creature
     def add_attack(self, attack_name: str, attack_type: str, damage: tuple, armor_piercing: int = 0) -> None:
         self.attacks[attack_name] = (attack_type, damage, armor_piercing)
 
+    # Function to call for all trait rolls, which always includes the wild die -> returns the highest of the two rolls
     def trait_roll(self, trait: int) -> int:
-        self.trait = trait
-        return Die.roll_die(self.trait, True)
-    
+        return Die.roll_die(trait, True)
+
+    # Function to call for attack rolls -> returns 0 for failure, 1 for success, and 2 for raise
+    def attack_roll(self, target, attack_type: str, adjacent: bool = False) -> int:
+        if attack_type == "melee":
+            result = self.trait_roll(self.fighting) - target.parry
+        elif attack_type == "throwing":
+            result = self.trait_roll(self.athletics) - 4
+        elif attack_type == "ranged":
+            if adjacent:
+                result = self.trait_roll(self.shooting) - target.parry
+            else:
+                result = self.trait_roll(self.shooting) - 4
+        else:
+            raise ValueError("Invalid attack type. Use 'melee', 'throwing', or 'ranged'")
+        if result < 0:
+            return 0
+        elif result < 4:
+            return 1
+        else:
+            return 2
+
+    # Function to call for all damage rolls, which includes parameters for dice_count, dice_sides, and modifier as well as adding strength to melee attacks
     def damage_roll(self, attack_type: str, dice_count: int, dice_sides: int, modifier: int = 0) -> int:
         total_damage = 0
         for i in range(dice_count):
@@ -69,23 +91,6 @@ class Combat:
     def __init__(self, player: Player, opponent: Creature) -> None:
         self.player = player
         self.opponent = opponent
-
-    def attack_values(self, attack_type: str, adjacent: bool = False) -> tuple:
-        if attack_type == "melee":
-            attack_value = self.result_selection(self.player.skills["fighting"])
-            defense_value = self.opponent.parry
-        elif attack_type == "throwing":
-            attack_value = self.result_selection(self.player.skills["athletics"])
-            defense_value = 4
-        elif attack_type == "ranged":
-            attack_value = self.result_selection(self.player.skills["shooting"])
-            if adjacent:
-                defense_value = self.opponent.parry
-            else:
-                defense_value = 4
-        else:
-            raise ValueError("Invalid attack type. Use 'melee', 'throwing', or 'ranged'")
-        return attack_value, defense_value
 
     def attack_resolution(self, attack_type: str, adjacent = False) -> int:
         attack_values = self.attack_values(attack_type, adjacent)
