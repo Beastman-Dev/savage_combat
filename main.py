@@ -38,7 +38,18 @@ class Player(Combatant):
         self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
 
     def trait_roll(self, trait: int) -> int:
+        self.trait = trait
         return Die.roll_die(self.trait, True)
+    
+    def damage_roll(self, dice_count: int = 1, dice_sides: int, modifier: int = 0) -> int:
+        self.dice_count = dice_count
+        self.dice_sides = dice_sides
+        self.modifier = modifier
+        total_damage = 0
+        for i in range(self.dice_count):
+            total_damage += Die.roll_die(self.dice_sides)
+        total_damage += self.modifier
+        return total_damage
 
 class Die:
     def __init__(self, sides: int, wild_die: bool = False) -> int:
@@ -191,7 +202,7 @@ class Game:
         combat = Combat(self.player, self.opponent)
         return combat
 
-
+goblin_grunt: Combatant = Combatant("Goblin Grunt", 6, 4, 6, 6, 6, 8)
 
 # for i in range(10):
 #     print(f"Rolling a d4: {Die(4).roll_die()}")
