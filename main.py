@@ -97,9 +97,45 @@ class Creature:
 
     # Function to call for initiating an attack and resolving the results
     # Takes in the target, attack_type, and any additional parameters
-    # Returns the status of the target after the attack
+    # Returns the damage value modified by armor and armor piercing
     def attack(self, target, attack_method: str, adjacent: bool = False) -> str:
-        pass
+        attack_type = self.attacks[attack_method][0]
+        damage = self.attacks[attack_method][1]
+        # Reduce target's armor value by the armor piercing value of the attack
+        armor_value = target.armor_value - self.attacks[attack_method][2]
+        if armor_value < 0:
+            armor_value = 0
+        # Resolve the attack roll - result is 0 for failure, 1 for success, and 2 for raise
+        attack_result = self.attack_roll(target, attack_type, adjacent)
+        # If result is 0, return "Miss"
+        if attack_result == 0:
+            return "Miss"
+        # Calculate the damage dealt
+        damage_dealt = self.damage_roll(attack_type, damage[0], damage[1], damage[2])
+        # Add 1d6 bonus damage if attack result was a raise
+        if attack_result == 2:
+            damage_dealt += self.roll_die(6)
+        # Reduce damage by target's armor value, after ap is calcualted (above)
+        damage_dealt -= armor_value
+        # If damage is less than 0, set it to 0
+        if damage_dealt < 0:
+            damage_dealt = 0
+        return damage_dealt
+
+    def apply_damage(self, damage: int) -> str:
+        wounds = math.floor((damage - self.toughness) / 4)
+        self.wounds += wounds
+        if self.wounds >= 4:
+            self.status = "Incapacitated"
+        elif wounds == 0 and self.status == "Shaken":
+            self.wounds += 1
+            if self.wounds >= 4:
+                self.status = "Incapacitated"
+        elif wounds >= 0:
+            self.status = "Shaken"
+        if self.wounds >=1 and self.status == "Uninjured":
+            self.status = "Wounded"
+        return self.status
 
 class Player(Creature):
     def __init__(self, name: str, agility: int, smarts: int, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
@@ -108,27 +144,6 @@ class Player(Creature):
         self.smarts = smarts
         self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
 
-
-class Combat:
-    def __init__(self, player: Player, opponent: Creature) -> None:
-        self.player = player
-        self.opponent = opponent
-
-    def damage_effect(self, damage: int) -> str:
-        wounds = math.floor((damage - self.opponent.toughness) / 4)
-        self.opponent.wounds += wounds
-        if self.opponent.wounds >= 4:
-            self.opponent.status = "Incapacitated"
-        elif wounds == 0 and self.opponent.status == "Shaken":
-            self.opponent.wounds += 1
-            if self.opponent.wounds >= 4:
-                self.opponent.status = "Incapacitated"
-        elif wounds >= 0:
-            self.opponent.status = "Shaken"
-        if self.opponent.wounds >=1 and self.opponent.status == "Uninjured":
-            self.opponent.status = "Wounded"
-        return self.opponent.status
-        
 
 class Game:
     def __init__(self):
@@ -200,14 +215,9 @@ class Game:
 #creature = Creature(name, spirit, strength, vigor, athletics, fighting, shooting, armor)
 player_fighter: Creature = Creature("Player Fighter", 6, 6, 6, 6, 6, 6, 2)
 goblin_grunt: Creature = Creature("Goblin Grunt", 6, 4, 6, 6, 6, 8)
-short_spear = ["Short Spear", "melee", (1, 4, 0), 0]
-short_bow = ["Short Bow", "ranged", (2, 6, 0), 0]
-long_sword = ["Long Sword", "melee", (2, 6, 0), 0]
 goblin_grunt.add_attack("Short Spear", "melee", (1, 4, 0), 0)
 goblin_grunt.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
 player_fighter.add_attack("Long Sword", "melee", (2, 6, 0), 0)
-
-d6 = Die(6)
 
 print(player_fighter.roll_wild(player_fighter.fighting))
 
