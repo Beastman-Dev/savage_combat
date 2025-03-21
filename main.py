@@ -31,21 +31,51 @@ class Creature:
     def add_attack(self, attack_name: str, attack_type: str, damage: tuple, armor_piercing: int = 0) -> None:
         self.attacks[attack_name] = (attack_type, damage, armor_piercing)
 
-    # Function to call for all trait rolls, which always includes the wild die -> returns the highest of the two rolls
-    def trait_roll(self, trait: int) -> int:
-        return Die.roll_die(trait, True)
+    # Function to roll a die with a specified number of sides and an optional exploding parameter
+    # Takes in the number of sides and a boolean for exploding option, which defaults to True
+    # Returns the result of the roll
+    def roll_die(self, sides: int, exploding: bool = True) -> int:
+        roll = random.randint(1, sides)
+        print(f"  You rolled a {roll}")
+        if exploding == True and roll == sides:
+            print("The die exploded! Rolling again...")
+            roll += self.roll_die(sides, True)
+        return roll
 
-    # Function to call for attack rolls -> returns 0 for failure, 1 for success, and 2 for raise
+    # Function to roll multiple dice, add them together, and return the total
+    # Takes in the number of dice and the number of sides
+    # Returns the sum total of the dice rolls
+    def roll_dice(self, count: int, sides: int) -> int:
+        total = 0
+        for i in range(count):
+            total += self.roll_die(sides)
+        return total
+
+    # Function to roll a trait die and a wild die, compare the results, and return the higher of the two
+    # Takes in the number of sides on the die
+    # Returns the higher of the two rolls
+    def roll_wild(self, sides: int) -> int:
+        print("\nRolling the trait die...")
+        result = self.roll_die(sides)
+        print("\nRolling the wild die...")
+        wild = self.roll_die(6)
+        if wild > result:
+            print("\nThe wild roll was better.")
+            return wild
+        print("\nThe trait roll was better.")
+        return result
+
+    # Function to call for resolving attack rolls -> returns 0 for failure, 1 for success, and 2 for raise
     def attack_roll(self, target, attack_type: str, adjacent: bool = False) -> int:
         if attack_type == "melee":
-            result = self.trait_roll(self.fighting) - target.parry
+            result = self.roll_wild(self.fighting) - target.parry
         elif attack_type == "throwing":
-            result = self.trait_roll(self.athletics) - 4
+            result = self.roll_wild(self.athletics) - 4
         elif attack_type == "ranged":
             if adjacent:
-                result = self.trait_roll(self.shooting) - target.parry
+                result = self.roll_wild(self.shooting) - target.parry
             else:
-                result = self.trait_roll(self.shooting) - 4
+                result = self.roll_wild(self.shooting) - 4
         else:
             raise ValueError("Invalid attack type. Use 'melee', 'throwing', or 'ranged'")
         if result < 0:
@@ -55,15 +85,22 @@ class Creature:
         else:
             return 2
 
-    # Function to call for all damage rolls, which includes parameters for dice_count, dice_sides, and modifier as well as adding strength to melee attacks
+    # Function to call for all damage rolls which automatically adds Strength for melee attacks
+    # Takes in attack_type, dice_count, dice_sides, and an optional modifier which defaults to 0
+    # Returns the total damage dealt
     def damage_roll(self, attack_type: str, dice_count: int, dice_sides: int, modifier: int = 0) -> int:
-        total_damage = 0
-        for i in range(dice_count):
-            total_damage += Die.roll_die(dice_sides)
+        
+        total_damage = self.roll_dice(dice_count, dice_sides)
         if attack_type == "melee":
-            total_damage += self.trait_roll(self.strength)
+            total_damage += self.roll_die(self.strength, True)
         total_damage += modifier
         return total_damage
+
+    # Function to call for initiating an attack and resolving the results
+    # Takes in the target, attack_type, and any additional parameters
+    # Returns the status of the target after the attack
+    def attack(self, target, attack_method: str, adjacent: bool = False) -> str:
+        pass
 
 class Player(Creature):
     def __init__(self, name: str, agility: int, smarts: int, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
@@ -72,56 +109,34 @@ class Player(Creature):
         self.smarts = smarts
         self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
 
+
 class Die:
-    def __init__(self, sides: int, wild_die: bool = False) -> int:
+    def __init__(self, sides: int) -> int:
         self.sides = sides
-        self.wild_die = wild_die
     
-    def roll_die(self) -> int:
-        roll = random.randint(1, self.sides)
+    def roll_die(self, wild_die: bool = False) -> int:
+        sides = self.sides
+        roll = random.randint(1, sides)
         if roll == self.sides:
             roll += self.roll_die()
-        if self.wild_die:
+        if wild_die:
             wild_roll = random.randint(1, 6)
             if wild_roll > roll:
                 roll = wild_roll
         return roll
 
+class Dice_Set:
+    def __init__(self) -> None:
+        d4 = Die(4)
+        d6 = Die(6)
+        d8 = Die(8)
+        d10 = Die(10)
+        d12 = Die(12)
+
 class Combat:
     def __init__(self, player: Player, opponent: Creature) -> None:
         self.player = player
         self.opponent = opponent
-
-    def attack_resolution(self, attack_type: str, adjacent = False) -> int:
-        attack_values = self.attack_values(attack_type, adjacent)
-        attack_value = attack_values[0]
-        defense_value = attack_values[1]
-        if attack_value >= defense_value + 4:
-            return 2
-        elif attack_value >= defense_value:
-            return 1
-        else:
-            return 0
-
-    def calculate_damage(self, dice_notation: str) -> int:
-        # Use a regular expression to parse the dice notation
-        pattern = r'(\d+)d(\d+)([+-]\d+)?'
-        match = re.fullmatch(pattern, dice_notation.strip())
-
-        if not match:
-            raise ValueError("Invalid dice notation. Use format like '2d6+2'")
-
-        # Extract the number of dice, the number of sides, and the modifier
-        # Set the total starting value to the modifier (or 0 if no modifier)
-        num_dice = int(match.group(1))
-        sides = int(match.group(2))
-        total = int(match.group(3)) if match.group(3) else 0
-
-        # Roll the dice and add the modifier
-        for i in range(num_dice):
-            roll = self.roll_die(sides)
-            total += roll
-        return total
 
     def damage_effect(self, damage: int) -> str:
         wounds = math.floor((damage - self.opponent.toughness) / 4)
@@ -206,7 +221,28 @@ class Game:
         combat = Combat(self.player, self.opponent)
         return combat
 
+#creature = Creature(name, spirit, strength, vigor, athletics, fighting, shooting, armor)
+player_fighter: Creature = Creature("Player Fighter", 6, 6, 6, 6, 6, 6, 2)
 goblin_grunt: Creature = Creature("Goblin Grunt", 6, 4, 6, 6, 6, 8)
+short_spear = ["Short Spear", "melee", (1, 4, 0), 0]
+short_bow = ["Short Bow", "ranged", (2, 6, 0), 0]
+long_sword = ["Long Sword", "melee", (2, 6, 0), 0]
+goblin_grunt.add_attack("Short Spear", "melee", (1, 4, 0), 0)
+goblin_grunt.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
+player_fighter.add_attack("Long Sword", "melee", (2, 6, 0), 0)
+
+d6 = Die(6)
+
+print(player_fighter.roll_wild(player_fighter.fighting))
+
+# print(f"Player attacks goblin: {player_fighter.attack_roll(goblin_grunt, "melee")}!")
+# print(f"Player damages goblin: {player_fighter.damage_roll("melee", 1, 8)}!")
+# print(f"Goblin attacks player: {goblin_grunt.attack_roll(player_fighter, 'melee')}!")
+# print(f"Goblin damages player: {goblin_grunt.damage_roll("melee", 1, 4)}!")
+# print(f"Goblin status: {goblin_grunt.status}!")
+# print(f"Player status: {player_fighter.status}!")
+# print(f"Goblin wounds: {goblin_grunt.wounds}!")
+# print(f"Player wounds: {player_fighter.wounds}!")
 
 # for i in range(10):
 #     print(f"Rolling a d4: {Die(4).roll_die()}")
