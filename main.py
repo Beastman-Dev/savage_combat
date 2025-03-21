@@ -22,9 +22,6 @@ class Creature:
         self.toughness = int(self.vigor) / 2 + 2
         self.status = "Uninjured"
         self.wounds = 0
-        # self.attributes = {"spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
-        # self.skills = {"athletics": self.athletics, "fighting": self.fighting, "shooting": self.shooting}
-        # self.defenses = {"parry": self.parry, "toughness": self.toughness, "armor": self.armor_value}
         self.attacks = {"unarmed": ("melee", (0,0,0), 0)}
 
     # Function for adding an attack to the dictionary of attacks for a specified creature
@@ -65,7 +62,9 @@ class Creature:
         print("\nThe trait roll was better.")
         return result
 
-    # Function to call for resolving attack rolls -> returns 0 for failure, 1 for success, and 2 for raise
+    # Function to call for resolving attack rolls
+    # Takes in the target, attack type, and an optional parameter for adjacency which defaults to False
+    # Returns the result of the attack roll: 0 for failure, 1 for success, and 2 for raise
     def attack_roll(self, target, attack_type: str, adjacent: bool = False) -> int:
         if attack_type == "melee":
             result = self.roll_wild(self.fighting) - target.parry
@@ -109,29 +108,6 @@ class Player(Creature):
         self.smarts = smarts
         self.attributes = {"agility": self.agility, "smarts": self.smarts, "spirit": self.spirit, "strength": self.strength, "vigor": self.vigor}
 
-
-class Die:
-    def __init__(self, sides: int) -> int:
-        self.sides = sides
-    
-    def roll_die(self, wild_die: bool = False) -> int:
-        sides = self.sides
-        roll = random.randint(1, sides)
-        if roll == self.sides:
-            roll += self.roll_die()
-        if wild_die:
-            wild_roll = random.randint(1, 6)
-            if wild_roll > roll:
-                roll = wild_roll
-        return roll
-
-class Dice_Set:
-    def __init__(self) -> None:
-        d4 = Die(4)
-        d6 = Die(6)
-        d8 = Die(8)
-        d10 = Die(10)
-        d12 = Die(12)
 
 class Combat:
     def __init__(self, player: Player, opponent: Creature) -> None:
