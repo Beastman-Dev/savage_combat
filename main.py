@@ -30,7 +30,7 @@ class Creature:
 
     # Function to roll a die with a specified number of sides and an optional exploding parameter
     # Takes in the number of sides and a boolean for exploding option, which defaults to True
-    # Returns the result of the roll
+    # Returns the result of the roll as a list (in case of an explosion)
     def roll_die(self, sides: int, exploding: bool = True) -> list:
         rolls = []
         roll = random.randint(1, sides)
@@ -39,9 +39,9 @@ class Creature:
             self.roll_die(sides)
         return rolls
 
-    # Function to roll multiple dice, add them together, and return the total
-    # Takes in the number of dice and the number of sides
-    # Returns the sum total of the dice rolls
+    # Function to roll multiple dice with a specified number of sides and an optional exploding parameter
+    # Takes in the number of dice, the number of sides, and a boolean for exploding option, which defaults to True
+    # Returns the result of all rolls, including any explosions, as a list
     def roll_dice(self, count: int, sides: int, exploding: bool = True) -> list:
         rolls = []
         total = 0
@@ -55,8 +55,8 @@ class Creature:
 
     # Function to roll a trait die and a wild die, compare the results, and return the higher of the two
     # Takes in the number of sides on the die
-    # Returns the higher of the two rolls
-    def roll_wild(self, sides: int) -> int:
+    # Returns the higher of the two rolls as a list to account for explosions, and a boolean for the wild die
+    def roll_wild(self, sides: int) -> list:
         trait_roll = self.roll_die(sides)
         wild_roll = self.roll_die(6)
         if sum(wild_roll) > sum(trait_roll):
@@ -91,10 +91,12 @@ class Creature:
     # Takes in attack_type, dice_count, dice_sides, and an optional modifier which defaults to 0
     # Returns the total damage dealt
     def damage_roll(self, attack_type: str, dice_count: int, dice_sides: int, modifier: int = 0) -> int:        
-        total_damage = sum(self.roll_dice(dice_count, dice_sides))
+        damage_roll = self.roll_dice(dice_count, dice_sides)
         if attack_type == "melee":
-            total_damage += sum(self.roll_die(self.strength, True))
-        total_damage += modifier
+            strength_damage = self.roll_die(self.strength, True)
+            for item in strength_damage:
+                damage_roll.append(item)
+        total_damage = sum(damage_roll) + modifier
         return total_damage
 
     # Function to call for initiating an attack and resolving the results
