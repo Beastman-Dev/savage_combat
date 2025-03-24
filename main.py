@@ -31,52 +31,55 @@ class Creature:
     # Function to roll a die with a specified number of sides and an optional exploding parameter
     # Takes in the number of sides and a boolean for exploding option, which defaults to True
     # Returns the result of the roll
-    def roll_die(self, sides: int, exploding: bool = True) -> int:
+    def roll_die(self, sides: int, exploding: bool = True) -> list:
+        rolls = []
         roll = random.randint(1, sides)
-        print(f"  You rolled a {roll}")
+        rolls.append(roll)
         if exploding == True and roll == sides:
-            print("The die exploded! Rolling again...")
-            roll += self.roll_die(sides, True)
-        return roll
+            self.roll_die(sides)
+        return rolls
 
     # Function to roll multiple dice, add them together, and return the total
     # Takes in the number of dice and the number of sides
     # Returns the sum total of the dice rolls
-    def roll_dice(self, count: int, sides: int) -> int:
+    def roll_dice(self, count: int, sides: int, exploding: bool = True) -> list:
+        rolls = []
         total = 0
         for i in range(count):
-            total += self.roll_die(sides)
-        return total
+            roll = self.roll_die(sides, exploding)
+            for item in roll:
+                rolls.append(item)
+        # total = sum(rolls)
+        # return total
+        return rolls
 
     # Function to roll a trait die and a wild die, compare the results, and return the higher of the two
     # Takes in the number of sides on the die
     # Returns the higher of the two rolls
     def roll_wild(self, sides: int) -> int:
-        print("\nRolling the trait die...")
-        result = self.roll_die(sides)
-        print("\nRolling the wild die...")
-        wild = self.roll_die(6)
-        if wild > result:
-            print("\nThe wild roll was better.")
-            return wild
-        print("\nThe trait roll was better.")
-        return result
+        trait_roll = self.roll_die(sides)
+        wild_roll = self.roll_die(6)
+        if sum(wild_roll) > sum(trait_roll):
+            return wild_roll, 1
+        return trait_roll, 0
 
     # Function to call for resolving attack rolls
     # Takes in the target, attack type, and an optional parameter for adjacency which defaults to False
     # Returns the result of the attack roll: 0 for failure, 1 for success, and 2 for raise
     def attack_roll(self, target, attack_type: str, adjacent: bool = False) -> int:
         if attack_type == "melee":
-            result = self.roll_wild(self.fighting) - target.parry
+            roll, wild = self.roll_wild(self.fighting)
+            result = sum(roll) - target.parry
         elif attack_type == "throwing":
-            result = self.roll_wild(self.athletics) - 4
+            roll, wild = self.roll_wild(self.athletics)
+            result = sum(roll) - 4
         elif attack_type == "ranged":
             if adjacent:
-                result = self.roll_wild(self.shooting) - target.parry
+                roll, wild = self.roll_wild(self.shooting)
+                result = sum(roll) - target.parry
             else:
-                result = self.roll_wild(self.shooting) - 4
-        else:
-            raise ValueError("Invalid attack type. Use 'melee', 'throwing', or 'ranged'")
+                roll, wild = self.roll_wild(self.shooting)
+                result = sum(roll) - 4
         if result < 0:
             return 0
         elif result < 4:
@@ -88,9 +91,9 @@ class Creature:
     # Takes in attack_type, dice_count, dice_sides, and an optional modifier which defaults to 0
     # Returns the total damage dealt
     def damage_roll(self, attack_type: str, dice_count: int, dice_sides: int, modifier: int = 0) -> int:        
-        total_damage = self.roll_dice(dice_count, dice_sides)
+        total_damage = sum(self.roll_dice(dice_count, dice_sides))
         if attack_type == "melee":
-            total_damage += self.roll_die(self.strength, True)
+            total_damage += sum(self.roll_die(self.strength, True))
         total_damage += modifier
         return total_damage
 
@@ -113,7 +116,7 @@ class Creature:
         damage_dealt = self.damage_roll(attack_type, damage[0], damage[1], damage[2])
         # Add 1d6 bonus damage if attack result was a raise
         if attack_result == 2:
-            damage_dealt += self.roll_die(6)
+            damage_dealt += sum(self.roll_die(6))
         # Reduce damage by target's armor value, after ap is calcualted (above)
         damage_dealt -= armor_value
         # If damage is less than 0, set it to 0
@@ -214,26 +217,53 @@ class Game:
         self.opponent: Creature = Creature(name, spirit, vigor, athletics, fighting, shooting, armor)
 
 
-# player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
-# enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 0)
-# for i in range(10):
-#     print(player.attack(enemy, "unarmed"))
-#     input()
 
+# Functional testing
+def test_combatants():
+    player = Player("Beastman", 10, 6, 8, 6, 6, 8, 10, 8, 2)
+    goblin = Creature("Goblin", 6, 6, 6, 6, 6, 6, 0)
+    goblin.add_attack("Short Spear", "melee", (1, 4, 0), 0)
+    goblin.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
+    player.add_attack("Long Sword", "melee", (2, 6, 0), 0)
+    return player, goblin
 
-## creature = Creature(name, spirit, strength, vigor, athletics, fighting, shooting, armor)
-# player_fighter: Creature = Creature("Player Fighter", 6, 6, 6, 6, 6, 6, 2)
-# goblin_grunt: Creature = Creature("Goblin Grunt", 6, 4, 6, 6, 6, 8)
-# goblin_grunt.add_attack("Short Spear", "melee", (1, 4, 0), 0)
-# goblin_grunt.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
-# player_fighter.add_attack("Long Sword", "melee", (2, 6, 0), 0)
+def combat_test():
+    player, enemy = test_combatants()
+    player_attack = list(player.attacks.keys())[1]
+    enemy_attack = list(enemy.attacks.keys())[1]
 
-# player_fighter.attack(goblin_grunt, "Long Sword")
+    print(f"Player: {player.name}, Weapon: {player_attack}")
+    print(f"Enemy: {enemy.name}, Weapon: {enemy_attack}")
+    print("Combat begins...")
+    input("Press [Enter] to continue...")
 
-# Step 1: Initialize game and collect player inputs
-# Step 2: Display current values and prompt to start combat loop
-# Step 3: Initiate combat loop and prompt for opponent data
-# Step 4: Select player attack or player defense
-# Step 5: Prompt for type of attack and any relevant parameters
-# Step 6: Print attack resolution step-by-step
-# Step 7: Return to Step 4
+    print(f"{player.name} attacks {enemy.name} with {player_attack}...")
+
+    damage = player.attack(enemy, player_attack)
+    print(f"Damage dealt: {damage}")
+    input("Press [Enter] to continue...")
+
+    print("Applying damage...")
+    print(f"{enemy.name} is {enemy.apply_damage(player, damage)}")
+
+    input("Press [Enter] to continue...")
+    print(f"{enemy.name} attacks {player.name} with {enemy_attack}...")
+    damage = enemy.attack(player, enemy_attack)
+    print(f"Damage dealt: {damage}")
+    input("Press [Enter] to continue...")
+
+    print("Applying damage...")
+    print(f"{player.name} is {player.apply_damage(enemy, damage)}")
+
+#combat_test()
+
+'''
+### Steps for Combat Manager ###
+Step 1: Initialize game and collect player inputs
+Step 2: Display current values and prompt to start combat loop
+Step 3: Initiate combat loop and prompt for opponent data
+Step 4: Select player attack or player defense
+Step 5: Prompt for type of attack and any relevant parameters
+Step 6: Print attack resolution step-by-step
+Step 7: Return to Step 4
+'''

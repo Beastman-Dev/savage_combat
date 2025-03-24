@@ -17,15 +17,18 @@ def add_attack():
 
 def roll_die():
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
-    assert enemy.roll_die(6) > 0
+    results = enemy.roll_die(6)
+    assert sum(results) > 0
 
 def roll_dice():
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
-    assert enemy.roll_dice(6, 2) > 0
+    assert sum(enemy.roll_dice(6, 2)) > 0
 
 def roll_wild():
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
-    assert enemy.roll_wild(6) > 0
+    result, wild = enemy.roll_wild(6)
+    assert sum(result) > 0
+    assert bool(wild) == True
 
 def attack_roll():
     player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
