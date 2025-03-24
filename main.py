@@ -60,8 +60,8 @@ class Creature:
         trait_roll = self.roll_die(sides)
         wild_roll = self.roll_die(6)
         if sum(wild_roll) > sum(trait_roll):
-            return wild_roll, 1
-        return trait_roll, 0
+            return wild_roll, True
+        return trait_roll, False
 
     # Function to call for resolving attack rolls
     # Takes in the target, attack type, and an optional parameter for adjacency which defaults to False
@@ -99,21 +99,31 @@ class Creature:
         total_damage = sum(damage_roll) + modifier
         return total_damage
 
+    # Function for identifying the attack type (melee, ranged, or throwing) based on the weapon used in the attack
+    # Takes in the weapon and returns the attack type
+    def attack_type(self, weapon: dict) -> str:
+        return self.attacks[weapon][0]
+
     # Function to call for initiating an attack and resolving the results
     # Takes in the target, attack_type, and any additional parameters
     # Returns the damage value modified by armor and armor piercing
     def attack(self, target, attack_method: str, adjacent: bool = False) -> int:
-        attack_type = self.attacks[attack_method][0]
-        damage = self.attacks[attack_method][1]
+
+        attack_type = self.attacks[attack_method][0] # Sets attack_type to melee, ranged, or throwing based on the attack method
+        # Resolve the attack roll - result is 0 for failure, 1 for success, and 2 for raise
+        attack_result = self.attack_roll(target, attack_type, adjacent)
+        if attack_result == 0: # If result is 0, return -1 for a "miss"
+            return -1
+
+        # Roll damage based on the attack method
+        damage = self.attacks[attack_method][1] # Sets the damage tuple (number of dice, dice sides, and damage bonus) based on the attack method
+
         # Reduce target's armor value by the armor piercing value of the attack
         armor_value = target.armor_value - self.attacks[attack_method][2]
         if armor_value < 0:
             armor_value = 0
-        # Resolve the attack roll - result is 0 for failure, 1 for success, and 2 for raise
-        attack_result = self.attack_roll(target, attack_type, adjacent)
-        # If result is 0, return "Miss"
-        if attack_result == 0:
-            return -1
+
+
         # Calculate the damage dealt
         damage_dealt = self.damage_roll(attack_type, damage[0], damage[1], damage[2])
         # Add 1d6 bonus damage if attack result was a raise

@@ -28,7 +28,7 @@ def roll_wild():
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
     result, wild = enemy.roll_wild(6)
     assert sum(result) > 0
-    assert bool(wild) == True
+    assert type(wild) == bool
 
 def attack_roll():
     player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
