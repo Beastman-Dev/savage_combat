@@ -267,36 +267,38 @@ class Game:
         self.opponent: Creature = Creature(name, spirit, vigor, athletics, fighting, shooting, armor)
 
     # Interprets attack resolution output and prints the results
-    def print_results(self, results: dict):
+    def print_results(self, attacker, defender, weapon, results: dict):
+        print(f"{attacker.name} attacks {defender.name} with {weapon}...")
         print(f"Attack: {results['attack']}")
-        print(f"Damage Roll: {results['damage roll']}")
-        print(f"Damage Total: {results['damage total']}")
-        print(f"Damage Inflicted: {results['damage_inflicted']}")
-        if results['damage_inflicted'] == "Wounded":
-            print(f"Wounds Inflicted: {results['wounds_inflicted']}")
+        if results["attack"] != "miss":
+            print(f"Damage: {results['damage_inflicted']}")
+            if results['damage_inflicted'] == "Wounded":
+                print(f"Wounds Inflicted: {results['wounds_inflicted']}")
         print("\n")
 
 # Functional testing
 
 def test_player():
     player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
-    player.add_attack("Long Sword", "melee", (2, 6, 0), 0)
+    player.add_attack("long sword", "melee", (2, 6, 0), 0)
     return player
 
 def test_enemy():
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
-    enemy.add_attack("Short Spear", "melee", (1, 4, 0), 0)
-    enemy.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
+    enemy.add_attack("short spear", "melee", (1, 4, 0), 0)
+    enemy.add_attack("short bow", "ranged", (2, 6, 0), 0)
     return enemy
 
-def test_attack():
+def test_attack(weapon: str = "long sword"):
     player = test_player()
     enemy = test_enemy()
-    attack_results = player.attack_resolution(enemy, "Long Sword")
-    return attack_results
+    attack_results = player.attack_resolution(enemy, weapon)
+    return player, enemy, attack_results
 
 game = Game()
-game.print_results(test_attack())
+weapon = "long sword"
+player, enemy, results = test_attack(weapon)
+game.print_results(player, enemy, weapon, results)
 
 # player, goblin = test_combatants()
 # for i in range(10):
@@ -306,35 +308,7 @@ game.print_results(test_attack())
 #     except Exception as e:
 #         print(e)
 
-def combat_test():
-    player, enemy = test_combatants()
-    player_attack = list(player.attacks.keys())[1]
-    enemy_attack = list(enemy.attacks.keys())[1]
 
-    print(f"Player: {player.name}, Weapon: {player_attack}")
-    print(f"Enemy: {enemy.name}, Weapon: {enemy_attack}")
-    print("Combat begins...")
-    input("Press [Enter] to continue...")
-
-    print(f"{player.name} attacks {enemy.name} with {player_attack}...")
-
-    damage = player.attack_resolution(enemy, player_attack)
-    print(f"Damage dealt: {damage}")
-    input("Press [Enter] to continue...")
-
-    print("Applying damage...")
-    print(f"{enemy.name} is {enemy.apply_damage(player, damage)}")
-
-    input("Press [Enter] to continue...")
-    print(f"{enemy.name} attacks {player.name} with {enemy_attack}...")
-    damage = enemy.attack(player, enemy_attack)
-    print(f"Damage dealt: {damage}")
-    input("Press [Enter] to continue...")
-
-    print("Applying damage...")
-    print(f"{player.name} is {player.apply_damage(enemy, damage)}")
-
-#combat_test()
 
 '''
 ### Steps for Combat Manager ###
