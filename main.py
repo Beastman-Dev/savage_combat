@@ -99,7 +99,7 @@ class Creature:
     # Function to call for initiating an attack and resolving the results
     # Takes in the target, attack_type, weapon_damage, armor_piercing, and a boolean value for attack_raise which defaults to False
     # Returns the total damage dealt after all modifiers
-    def damage_calculation(self, target, attack_type: str, weapon_damage: tuple, armor_piercing: int, attack_raise: bool = False) -> int:
+    def damage_calculation(self, target, attack_type: str, weapon_damage: tuple, armor_piercing: int, attack_raise: bool = False) -> list:
 
         # Unpack the weapon damage tuple
         dice_count = weapon_damage[0]
@@ -125,7 +125,7 @@ class Creature:
         if damage_dealt < 0:
             damage_dealt = 0
 
-        return damage_dealt
+        return damage_roll, damage_dealt
 
     # Function to apply damage to a creature and update their status
     # Takes in target and the amount of damage dealt
@@ -152,25 +152,37 @@ class Creature:
         attack_type = self.attacks[weapon][0]
         attack_damage = self.attacks[weapon][1]
         armor_piercing = self.attacks[weapon][2]
+        attack_result = {}
         attack_raise = False
 
         # Attack roll -> Result
         # Takes target, attack type, and optional adjacency (defaults to False)
-        attack_result = self.attack_roll(target, attack_type, adjacent)
-        if attack_result == 0: # If result is 0, return -1 for a "miss"
-            return -1 # Attack misses
-        elif attack_result == 2: # If result is 2, set True for a "hit with a raise"
+        attack_roll_result = self.attack_roll(target, attack_type, adjacent)
+        if attack_roll_result[0] == 0: # If result is 0, return -1 for a "miss"
+            attack_result["attack"] = "miss"
+            return attack_result
+        elif attack_roll_result[0] == 1:
+            attack_result["attack"] = "hit"
+        elif attack_roll_result[0] == 2:
+            attack_result["attack"] = "hit with a raise"
             attack_raise = True
+        else:
+            raise ValueError("Invalid attack roll result")
 
         # Damage roll -> Damage
         # Takes in the target, attack_type, weapon_damage, armor_piercing, and a boolean value for attack_raise which defaults to False
         # Returns the total damage dealt after all modifiers
-        damage = self.damage_calculation(target, attack_type, attack_damage, armor_piercing, attack_raise)
+        damage_roll, damage_total = self.damage_calculation(target, attack_type, attack_damage, armor_piercing, attack_raise)
+        attack_result["damage roll"] = damage_roll
+        attack_result["damage total"] = damage_total
 
         # Damage effect -> Status
         # Takes in target and the amount of damage dealt
         # Returns the updated status of the creature
-        return self.apply_damage(target, damage)
+        target_status = self.apply_damage(target, damage_total)
+        attack_result["status"] = target_status
+
+        return attack_result
 
 
 class Player(Creature):
@@ -247,6 +259,20 @@ class Game:
 
 
 # Functional testing
+
+def attack_resolution_test():
+    player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
+    enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 0)
+    resolved_attack = player.attack_resolution(enemy, "unarmed")
+    print(resolved_attack)
+
+# for i in range(10):
+#     try:
+#         attack_resolution_test()
+#     except Exception as e:
+#         print(e)
+
+
 def test_combatants():
     player = Player("Beastman", 10, 6, 8, 6, 6, 8, 10, 8, 2)
     goblin = Creature("Goblin", 6, 6, 6, 6, 6, 6, 0)
@@ -267,7 +293,7 @@ def combat_test():
 
     print(f"{player.name} attacks {enemy.name} with {player_attack}...")
 
-    damage = player.attack(enemy, player_attack)
+    damage = player.attack_resolution(enemy, player_attack)
     print(f"Damage dealt: {damage}")
     input("Press [Enter] to continue...")
 

@@ -48,7 +48,9 @@ def damage_calculation():
     attack_type = "melee"
     weapon_damage = (1, 4, 0)
     armor_piercing = 0
-    assert player.damage_calculation(enemy, attack_type, weapon_damage, armor_piercing) >= 0
+    damage_roll, damage_total = player.damage_calculation(enemy, attack_type, weapon_damage, armor_piercing)
+    assert type(damage_roll) == list
+    assert damage_total >= 0
 
 def apply_damage():
     player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
@@ -61,7 +63,8 @@ def apply_damage():
 def attack_resolution():
     player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 0)
-    assert player.attack_resolution(enemy, "unarmed") in ["Uninjured", "Shaken", "Wounded", "Incapacitated"]
+    resolved_attack = player.attack_resolution(enemy, "unarmed")
+    assert resolved_attack["attack"] in ["miss", "hit", "hit with a raise"]
 
 if __name__ == "__main__":
     print("Testing player creation...")
