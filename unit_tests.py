@@ -55,10 +55,12 @@ def damage_calculation():
 def apply_damage():
     player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 0)
-    assert player.apply_damage(enemy, 0) == "Uninjured"
-    assert player.apply_damage(enemy, 5) == "Shaken"
-    assert player.apply_damage(enemy, 9) == "Wounded"
-    assert player.apply_damage(enemy, 21) == "Incapacitated"
+    assert player.apply_damage(enemy, 0) == -1
+    assert player.apply_damage(enemy, 5) == 0
+    assert player.apply_damage(enemy, 9) == 1
+    assert player.apply_damage(enemy, 13) == 2
+    assert player.apply_damage(enemy, 17) == 3
+    assert player.apply_damage(enemy, 21) == 4
 
 def attack_resolution():
     player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)

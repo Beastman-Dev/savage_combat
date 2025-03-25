@@ -35,8 +35,10 @@ class Creature:
         rolls = []
         roll = random.randint(1, sides)
         rolls.append(roll)
-        if exploding == True and roll == sides:
-            self.roll_die(sides)
+        if exploding == True:
+            while roll == sides:
+                roll = random.randint(1, sides)
+                rolls.append(roll)
         return rolls
 
     # Function to roll a trait die and a wild die, compare the results, and return the higher of the two
@@ -130,9 +132,9 @@ class Creature:
     # Function to apply damage to a creature and update their status
     # Takes in target and the amount of damage dealt
     # Returns the updated status of the creature
-    def apply_damage(self, target, damage: int) -> str:
+    def apply_damage(self, target, damage: int) -> int:
         if damage < target.toughness:
-            return target.status
+            return -1
         wounds = math.floor((damage - target.toughness) / 4)
         target.wounds += wounds
         if target.wounds >= 4:
@@ -146,7 +148,9 @@ class Creature:
             target.status = "Wounded"
         elif wounds == 0 and target.status == "Uninjured":
             target.status = "Shaken"
-        return target.status
+        if target.wounds > 3:
+            target.wounds = 3
+        return wounds
 
     def attack_resolution(self, target, weapon, adjacent = False) -> str:
         attack_type = self.attacks[weapon][0]
@@ -179,9 +183,15 @@ class Creature:
         # Damage effect -> Status
         # Takes in target and the amount of damage dealt
         # Returns the updated status of the creature
-        target_status = self.apply_damage(target, damage_total)
-        attack_result["status"] = target_status
-
+        damage_effect = self.apply_damage(target, damage_total)
+        if damage_effect == -1:
+            attack_result["damage_inflicted"] = "No damage"
+        elif damage_effect == 0:
+            attack_result["damage_inflicted"] = "Shaken"
+        else:
+            attack_result["damage_inflicted"] = "Wounded"
+            attack_result["wounds_inflicted"] = damage_effect
+        
         return attack_result
 
 
@@ -260,17 +270,6 @@ class Game:
 
 # Functional testing
 
-def attack_resolution_test():
-    player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
-    enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 0)
-    resolved_attack = player.attack_resolution(enemy, "unarmed")
-    print(resolved_attack)
-
-# for i in range(10):
-#     try:
-#         attack_resolution_test()
-#     except Exception as e:
-#         print(e)
 
 
 def test_combatants():
@@ -280,6 +279,16 @@ def test_combatants():
     goblin.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
     player.add_attack("Long Sword", "melee", (2, 6, 0), 0)
     return player, goblin
+
+player, goblin = test_combatants()
+for i in range(10):
+    try:
+        print(player.attack_resolution(goblin, "Long Sword"))
+        print(goblin.status)
+    except Exception as e:
+        print(e)
+
+
 
 def combat_test():
     player, enemy = test_combatants()
