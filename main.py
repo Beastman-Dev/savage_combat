@@ -39,6 +39,16 @@ class Creature:
             self.roll_die(sides)
         return rolls
 
+    # Function to roll a trait die and a wild die, compare the results, and return the higher of the two
+    # Takes in the number of sides on the die
+    # Returns the higher of the two rolls as a list to account for explosions, and a boolean for the wild die
+    def roll_wild(self, sides: int) -> list:
+        trait_roll = self.roll_die(sides)
+        wild_roll = self.roll_die(6)
+        if sum(wild_roll) > sum(trait_roll):
+            return wild_roll, True
+        return trait_roll, False
+
     # Function to roll multiple dice with a specified number of sides and an optional exploding parameter
     # Takes in the number of dice, the number of sides, and a boolean for exploding option, which defaults to True
     # Returns the result of all rolls, including any explosions, as a list
@@ -53,19 +63,9 @@ class Creature:
         # return total
         return rolls
 
-    # Function to roll a trait die and a wild die, compare the results, and return the higher of the two
-    # Takes in the number of sides on the die
-    # Returns the higher of the two rolls as a list to account for explosions, and a boolean for the wild die
-    def roll_wild(self, sides: int) -> list:
-        trait_roll = self.roll_die(sides)
-        wild_roll = self.roll_die(6)
-        if sum(wild_roll) > sum(trait_roll):
-            return wild_roll, True
-        return trait_roll, False
-
     # Function to call for resolving attack rolls
     # Takes in the target, attack type, and an optional parameter for adjacency which defaults to False
-    # Returns the result of the attack roll: 0 for failure, 1 for success, and 2 for raise
+    # Returns the result of the attack roll: 0 for failure, 1 for success, and 2 for raise; also returnds a boolean value for the wild die
     def attack_roll(self, target, attack_type: str, adjacent: bool = False) -> int:
         if attack_type == "melee":
             roll, wild = self.roll_wild(self.fighting)
@@ -81,59 +81,52 @@ class Creature:
                 roll, wild = self.roll_wild(self.shooting)
                 result = sum(roll) - 4
         if result < 0:
-            return 0
+            return 0, wild
         elif result < 4:
-            return 1
+            return 1, wild
         else:
-            return 2
+            return 2, wild
 
     # Function to call for all damage rolls which automatically adds Strength for melee attacks
     # Takes in attack_type, dice_count, dice_sides, and an optional modifier which defaults to 0
     # Returns the total damage dealt
-    def damage_roll(self, attack_type: str, dice_count: int, dice_sides: int, modifier: int = 0) -> int:        
+    def damage_roll(self, attack_type: str, dice_count: int, dice_sides: int) -> list:        
         damage_roll = self.roll_dice(dice_count, dice_sides)
         if attack_type == "melee":
-            strength_damage = self.roll_die(self.strength, True)
+            strength_damage = self.roll_die(self.strength)
             for item in strength_damage:
                 damage_roll.append(item)
-        total_damage = sum(damage_roll) + modifier
-        return total_damage
-
-    # Function for identifying the attack type (melee, ranged, or throwing) based on the weapon used in the attack
-    # Takes in the weapon and returns the attack type
-    def attack_type(self, weapon: dict) -> str:
-        return self.attacks[weapon][0]
+        return damage_roll
 
     # Function to call for initiating an attack and resolving the results
-    # Takes in the target, attack_type, and any additional parameters
-    # Returns the damage value modified by armor and armor piercing
-    def attack(self, target, attack_method: str, adjacent: bool = False) -> int:
+    # Takes in the target, attack_type, weapon_damage, armor_piercing, and a boolean value for attack_raise which defaults to False
+    # Returns the total damage dealt after all modifiers
+    def damage_calculation(self, target, attack_type: str, weapon_damage: tuple, armor_piercing: int, attack_raise: bool = False) -> int:
 
-        attack_type = self.attacks[attack_method][0] # Sets attack_type to melee, ranged, or throwing based on the attack method
-        # Resolve the attack roll - result is 0 for failure, 1 for success, and 2 for raise
-        attack_result = self.attack_roll(target, attack_type, adjacent)
-        if attack_result == 0: # If result is 0, return -1 for a "miss"
-            return -1
+        # Unpack the weapon damage tuple
+        dice_count = weapon_damage[0]
+        dice_sides = weapon_damage[1]
+        modifier = weapon_damage[2]
 
-        # Roll damage based on the attack method
-        damage = self.attacks[attack_method][1] # Sets the damage tuple (number of dice, dice sides, and damage bonus) based on the attack method
+        # Roll damage based on the weapon -> return list of damage dice rolls
+        damage_roll = self.damage_roll(attack_type, dice_count, dice_sides)
+        if attack_raise:
+            bonus_damage = self.roll_die(6)
+            for item in bonus_damage:
+                damage_roll.append(item)
 
         # Reduce target's armor value by the armor piercing value of the attack
-        armor_value = target.armor_value - self.attacks[attack_method][2]
+        armor_value = target.armor_value - armor_piercing
         if armor_value < 0:
             armor_value = 0
 
+        # Calculate the total damage dealt
+        damage_dealt = sum(damage_roll) + modifier - armor_value
 
-        # Calculate the damage dealt
-        damage_dealt = self.damage_roll(attack_type, damage[0], damage[1], damage[2])
-        # Add 1d6 bonus damage if attack result was a raise
-        if attack_result == 2:
-            damage_dealt += sum(self.roll_die(6))
-        # Reduce damage by target's armor value, after ap is calcualted (above)
-        damage_dealt -= armor_value
         # If damage is less than 0, set it to 0
         if damage_dealt < 0:
             damage_dealt = 0
+
         return damage_dealt
 
     # Function to apply damage to a creature and update their status
@@ -156,6 +149,31 @@ class Creature:
         elif wounds == 0 and target.status == "Uninjured":
             target.status = "Shaken"
         return target.status
+
+    def attack_resolution(self, target, weapon, adjacent = False) -> None:
+        attack_type = self.attacks[weapon][0]
+        attack_damage = self.attacks[weapon][1]
+        armor_piercing = self.attacks[weapon][2]
+        attack_raise = False
+
+        # Attack roll -> Result
+        # Takes target, attack type, and optional adjacency (defaults to False)
+        attack_result = self.attack_roll(target, attack_type, adjacent)
+        if attack_result == 0: # If result is 0, return -1 for a "miss"
+            return -1 # Attack misses
+        elif attack_result == 2: # If result is 2, set True for a "hit with a raise"
+            attack_raise = True
+
+        # Damage roll -> Damage
+        # Takes in the target, attack_type, weapon_damage, armor_piercing, and a boolean value for attack_raise which defaults to False
+        # Returns the total damage dealt after all modifiers
+        damage = self.damage_calculation(target, attack_type, attack_damage, armor_piercing, attack_raise)
+
+        # Damage effect -> Status
+        # Takes in target and the amount of damage dealt
+        # Returns the updated status of the creature
+        return self.apply_damage(target, damage)
+
 
 class Player(Creature):
     def __init__(self, name: str, agility: int, smarts: int, spirit: int, strength: int, vigor: int, athletics: int, fighting: int, shooting: int, armor_value: int) -> None:
