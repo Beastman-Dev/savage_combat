@@ -266,29 +266,45 @@ class Game:
         armor = input("Armor Value: ")
         self.opponent: Creature = Creature(name, spirit, vigor, athletics, fighting, shooting, armor)
 
-
+    # Interprets attack resolution output and prints the results
+    def print_results(self, results: dict):
+        print(f"Attack: {results['attack']}")
+        print(f"Damage Roll: {results['damage roll']}")
+        print(f"Damage Total: {results['damage total']}")
+        print(f"Damage Inflicted: {results['damage_inflicted']}")
+        if results['damage_inflicted'] == "Wounded":
+            print(f"Wounds Inflicted: {results['wounds_inflicted']}")
+        print("\n")
 
 # Functional testing
 
-
-
-def test_combatants():
-    player = Player("Beastman", 10, 6, 8, 6, 6, 8, 10, 8, 2)
-    goblin = Creature("Goblin", 6, 6, 6, 6, 6, 6, 0)
-    goblin.add_attack("Short Spear", "melee", (1, 4, 0), 0)
-    goblin.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
+def test_player():
+    player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
     player.add_attack("Long Sword", "melee", (2, 6, 0), 0)
-    return player, goblin
+    return player
 
-player, goblin = test_combatants()
-for i in range(10):
-    try:
-        print(player.attack_resolution(goblin, "Long Sword"))
-        print(goblin.status)
-    except Exception as e:
-        print(e)
+def test_enemy():
+    enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
+    enemy.add_attack("Short Spear", "melee", (1, 4, 0), 0)
+    enemy.add_attack("Short Bow", "ranged", (2, 6, 0), 0)
+    return enemy
 
+def test_attack():
+    player = test_player()
+    enemy = test_enemy()
+    attack_results = player.attack_resolution(enemy, "Long Sword")
+    return attack_results
 
+game = Game()
+game.print_results(test_attack())
+
+# player, goblin = test_combatants()
+# for i in range(10):
+#     try:
+#         print(player.attack_resolution(goblin, "Long Sword"))
+#         print(goblin.status)
+#     except Exception as e:
+#         print(e)
 
 def combat_test():
     player, enemy = test_combatants()
