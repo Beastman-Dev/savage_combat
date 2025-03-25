@@ -15,6 +15,12 @@ def add_attack():
     enemy.add_attack("Short Spear", "melee", (1, 4, 0), 0)
     assert enemy.attacks["Short Spear"] == ("melee", (1, 4, 0), 0)
 
+def status_report():
+    player = Player("Player", 10, 6, 8, 6, 6, 8, 10, 8, 2)
+    enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
+    assert player.status_report() == f"{player.name} is {player.status} with {player.wounds} wounds."
+    assert enemy.status_report() == f"{enemy.name} is {enemy.status} with {enemy.wounds} wounds."
+
 def roll_die():
     enemy = Creature("enemy", 6, 6, 6, 6, 6, 6, 2)
     results = enemy.roll_die(6)
@@ -75,6 +81,8 @@ if __name__ == "__main__":
     print(f"   Errors: {enemy_creation()}")
     print(f"Testing add_attack...")
     print(f"   Errors: {add_attack()}")
+    print(f"Testing status_report...")
+    print(f"   Errors: {status_report()}")
     print(f"Testing roll_die...")
     print(f"   Errors: {roll_die()}")
     print(f"Testing roll_wild...")

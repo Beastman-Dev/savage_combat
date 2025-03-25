@@ -28,6 +28,10 @@ class Creature:
     def add_attack(self, attack_name: str, attack_type: str, damage: tuple, armor_piercing: int = 0) -> None:
         self.attacks[attack_name] = (attack_type, damage, armor_piercing)
 
+    # Function for reporting the status of a creature
+    def status_report(self) -> str:
+        return f"{self.name} is {self.status} with {self.wounds} wounds."
+
     # Function to roll a die with a specified number of sides and an optional exploding parameter
     # Takes in the number of sides and a boolean for exploding option, which defaults to True
     # Returns the result of the roll as a list (in case of an explosion)
@@ -300,6 +304,8 @@ weapon = "long sword"
 player, enemy, results = test_attack(weapon)
 game.print_results(player, enemy, weapon, results)
 
+print(player.status_report())
+print(enemy.status_report())
 # player, goblin = test_combatants()
 # for i in range(10):
 #     try:
