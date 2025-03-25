@@ -59,8 +59,6 @@ class Creature:
             roll = self.roll_die(sides, exploding)
             for item in roll:
                 rolls.append(item)
-        # total = sum(rolls)
-        # return total
         return rolls
 
     # Function to call for resolving attack rolls
@@ -150,7 +148,7 @@ class Creature:
             target.status = "Shaken"
         return target.status
 
-    def attack_resolution(self, target, weapon, adjacent = False) -> None:
+    def attack_resolution(self, target, weapon, adjacent = False) -> str:
         attack_type = self.attacks[weapon][0]
         attack_damage = self.attacks[weapon][1]
         armor_piercing = self.attacks[weapon][2]
