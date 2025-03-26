@@ -444,8 +444,9 @@ def test_attack(weapon: str = "long sword"):
     attack_results = player.attack_resolution(enemy, weapon)
     return player, enemy, attack_results
 
-game = Game()
-game.options_manager()
+if __name__ == "__main__":
+    game = Game()
+    game.options_manager()
 
 # player = test_player()
 # game = Game()
