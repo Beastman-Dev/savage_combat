@@ -215,6 +215,43 @@ class Game:
     player: Player = Player("Player", 4, 4, 4, 4, 4, 4, 4, 4, 0)
     creatures: list = []
 
+    # Function to parse dice notation
+    # Takes in a string of dice notation
+    # Returns a tuple of the number of dice, the number of sides, and the modifier
+    def parse_dice_notation(self, notation: str) -> tuple:
+        pattern = r'^\s*(\d+)\s*[dD]\s*(\d+)(?:\s*([+-])\s*(\d+))?\s*$'
+        match = re.match(pattern, notation)
+        if not match:
+            raise ValueError(f"Invalid dice notation: {notation}")
+        
+        num_dice = int(match.group(1))
+        dice_sides = int(match.group(2))
+        
+        # Check if an optional modifier was provided.
+        sign = match.group(3)
+        mod_value = match.group(4)
+        
+        if sign is None or mod_value is None:
+            modifier = 0
+        else:
+            modifier = int(mod_value) if sign == '+' else -int(mod_value)
+        
+        return (num_dice, dice_sides, modifier)
+
+    # Add attack dialogue
+    def add_attack(self, creature):
+        name = input("Enter weapon/attack name: ")
+        type = input("Enter attack type (melee, ranged, throwing): ")
+        if type not in ["melee", "ranged", "throwing"]:
+            raise ValueError("Invalid attack type")
+        damage = input("Enter damage (dice notation): ")
+        damage = self.parse_dice_notation(damage)
+        armor_piercing = input("Enter armor piercing: ")
+        if not armor_piercing:
+            armor_piercing = 0
+        armor_piercing = int(armor_piercing)
+        creature.add_attack(name, type, damage, armor_piercing)
+
     # Collect player inputs    
     def player_inputs(self):
         name = input("Enter your character's name: ")
@@ -248,6 +285,12 @@ class Game:
         if not armor_value:
             armor_value = 0
         self.player: Player = Player(name, agility, smarts, spirit, strength, vigor, athletics, fighting, shooting, armor_value)
+        while True:
+            input("Press Enter to add an attack. Press Enter again to finish.")
+            self.add_attack(self.player)
+            choice = input("Add another attack? (y/n): ")
+            if choice.lower() == "n":
+                break
         self.options_manager()
 
     # Collect opponent inputs (sets default values if none are provided)
@@ -273,7 +316,39 @@ class Game:
         armor = input("Armor Value: ")
         self.opponent: Creature = Creature(name, spirit, vigor, athletics, fighting, shooting, armor)
         self.creatures.append(self.opponent)
+        if input(f"Is {name} armed? (y/n): ").lower() == "y":
+            self.add_attack(self.opponent)
+        if input("Added combatant. Add another? (y/n): ").lower() == "y":
+            self.opponent_inputs()
         self.options_manager()
+
+    # Return list of combatants
+    def get_combatants(self):
+            print("Combatants:")
+            print(f" * {self.player.name}")
+            for creature in self.creatures:
+                print(f" * {creature.name}")
+            input("Press Enter to continue...")
+
+    # Select target for attack resolution
+    def select_combatant(self, side: str):
+        print(f"Select {side}:")
+        print(f"1. {self.player.name}")
+        for i, creature in enumerate(self.creatures):
+            print(f"{i+2}. {creature.name}")
+        choice = input("Enter choice: ")
+        if choice == "1":
+            return self.player
+        else:
+            return self.creatures[int(choice)-2]
+
+    # Select weapon for attack resolution
+    def select_weapon(self, attacker):
+        print("Select weapon for attack resolution:")
+        for i, weapon in enumerate(attacker.attacks):
+            print(f"{i+1}. {weapon}")
+        weapon = input("Enter choice: ")
+        return list(attacker.attacks.keys())[int(weapon)-1]
 
     # Interprets attack resolution output and prints the results
     def print_results(self, attacker, defender, weapon, results: dict):
@@ -284,31 +359,71 @@ class Game:
             if results['damage_inflicted'] == "Wounded":
                 print(f"Wounds Inflicted: {results['wounds_inflicted']}")
         print("\n")
-        self.options_manager()
+        self.combat_manager()
 
-    # Menu for combat manager
-    def menu(self):
+    def resolve_attack(self):
+        attacker = self.select_combatant("attacker")
+        defender = self.select_combatant("defender")
+        weapon = self.select_weapon(attacker)
+        attack_results = attacker.attack_resolution(defender, weapon)
+        self.print_results(attacker, defender, weapon, attack_results)
+
+    # Menus for game options
+    def main_menu(self):
         print("Combat Manager")
         print("1. Enter player data")
         print("2. Enter opponent data")
-        print("3. Start combat")
-        print("4. Exit")
+        print("3. List combatants")
+        print("4. Start combat")
+        print("5. Exit")
         choice = input("Enter choice: ")
         return choice
     
     def options_manager(self):
-        choice = self.menu()
+        choice = self.main_menu()
         if choice == "1":
             self.player_inputs()
         elif choice == "2":
             self.opponent_inputs()
         elif choice == "3":
-            pass
+            print("Combatants:")
+            print(f" * {self.player.name}")
+            for creature in self.creatures:
+                print(f" * {creature.name}")
+            input("Press Enter to continue...")
+            self.options_manager()
         elif choice == "4":
+            self.combat_manager()
+        elif choice == "5":
             exit()
         else:
             print("Invalid choice. Please try again.")
             self.options_manager()
+
+    def combat_menu(self):
+        print("Combat Options")
+        print("1. Resolve Attack")
+        print("2. List Combatants")
+        print("3. Return to Main Menu")
+        print("4. Exit")
+        choice = input("Enter choice: ")
+        return choice
+
+    def combat_manager(self):
+        choice = self.combat_menu()
+        if choice == "1":
+            self.resolve_attack()
+            self.combat_manager()
+        elif choice == "2":
+            self.get_combatants()
+            self.combat_manager()
+        elif choice == "3":
+            self.options_manager()
+        elif choice == "4":
+            exit()
+        else:
+            print("Invalid choice. Please try again.")
+            self.combat_manager()
 
 # Functional testing
 
@@ -332,7 +447,9 @@ def test_attack(weapon: str = "long sword"):
 game = Game()
 game.options_manager()
 
-
+# player = test_player()
+# game = Game()
+# print(game.select_weapon(player))
 
 # weapon = "long sword"
 # player, enemy, results = test_attack(weapon)
