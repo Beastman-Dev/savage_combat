@@ -211,7 +211,9 @@ class Game:
     def __init__(self):
         pass
 
-    # Create player and opponent objects
+    # Global variables to store the player and opponent objects
+    player: Player = Player("Player", 4, 4, 4, 4, 4, 4, 4, 4, 0)
+    creatures: list = []
 
     # Collect player inputs    
     def player_inputs(self):
@@ -220,38 +222,39 @@ class Game:
             name = "Player"
         agility = input ("Agility: ")
         if not agility:
-            agility = 6
+            agility = 4
         smarts = input ("Smarts: ")
         if not smarts:
-            smarts = 6
+            smarts = 4
         spirit = input("Spirit: ")
         if not spirit:
-            spirit = 6
+            spirit = 4
         strength = input ("Strength: ")
         if not strength:
-            strength = 6
+            strength = 4
         vigor = input("Vigor: ")
         if not vigor:
-            vigor = 6
+            vigor = 4
         athletics = input("Athletics: ")
         if not athletics:
-            athletics = 6
+            athletics = 4
         fighting = input("Fighting: ")
         if not fighting:
-            fighting = 6
+            fighting = 4
         shooting = input("Shooting: ")
         if not shooting:
-            shooting = 6
+            shooting = 4
         armor_value = input("Armor Value: ")
         if not armor_value:
             armor_value = 0
         self.player: Player = Player(name, agility, smarts, spirit, strength, vigor, athletics, fighting, shooting, armor_value)
+        self.options_manager()
 
     # Collect opponent inputs (sets default values if none are provided)
     def opponent_inputs(self):
-        name = input("Enter your opponent's name: ")
+        name = input("Enter name for combatant: ")
         if not name:
-            name = "Opponent"
+            name = "Combatant"
         spirit = input("Spirit: ")
         if not spirit:
             spirit = 6
@@ -269,6 +272,8 @@ class Game:
             shooting = 6
         armor = input("Armor Value: ")
         self.opponent: Creature = Creature(name, spirit, vigor, athletics, fighting, shooting, armor)
+        self.creatures.append(self.opponent)
+        self.options_manager()
 
     # Interprets attack resolution output and prints the results
     def print_results(self, attacker, defender, weapon, results: dict):
@@ -279,6 +284,31 @@ class Game:
             if results['damage_inflicted'] == "Wounded":
                 print(f"Wounds Inflicted: {results['wounds_inflicted']}")
         print("\n")
+        self.options_manager()
+
+    # Menu for combat manager
+    def menu(self):
+        print("Combat Manager")
+        print("1. Enter player data")
+        print("2. Enter opponent data")
+        print("3. Start combat")
+        print("4. Exit")
+        choice = input("Enter choice: ")
+        return choice
+    
+    def options_manager(self):
+        choice = self.menu()
+        if choice == "1":
+            self.player_inputs()
+        elif choice == "2":
+            self.opponent_inputs()
+        elif choice == "3":
+            pass
+        elif choice == "4":
+            exit()
+        else:
+            print("Invalid choice. Please try again.")
+            self.options_manager()
 
 # Functional testing
 
@@ -300,12 +330,16 @@ def test_attack(weapon: str = "long sword"):
     return player, enemy, attack_results
 
 game = Game()
-weapon = "long sword"
-player, enemy, results = test_attack(weapon)
-game.print_results(player, enemy, weapon, results)
+game.options_manager()
 
-print(player.status_report())
-print(enemy.status_report())
+
+
+# weapon = "long sword"
+# player, enemy, results = test_attack(weapon)
+# game.print_results(player, enemy, weapon, results)
+
+# print(player.status_report())
+# print(enemy.status_report())
 # player, goblin = test_combatants()
 # for i in range(10):
 #     try:
