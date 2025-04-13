@@ -32,6 +32,7 @@ class Lock:
         self.failures += 1
         if self.failures > self.successes and self.successes > 0:
             self.successes = 0
+            self.failures = 0
             return "Something goes wrong, and you lose all progress."
         else:
             return "Failed attempt, no progress made"
@@ -73,28 +74,41 @@ class Lock:
 # Example usage
 if __name__ == "__main__":
 
-    print("Lockpicking Simulation")
-    print("Creating a lock to pick...")
+    rounds = 0
     lock = Lock(difficulty=4)
-    print(f"   Lock difficulty: {lock.difficulty}")
-    print(f"   Lock status: {'Locked' if lock.locked else 'Unlocked'}")
-    print(f"   Lock jammed: {lock.jammed}")
-    skill = 6  # Example skill level
-    print(f"\nAttempting to pick the lock with a skill of {skill}...\n")
+    skill = 4  # Example skill level
+
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+    print("Lockpicking Simulation")
+    print("Difficulty Level: ", lock.difficulty)
+    print("Skill Level: ", skill)
+    print("Press Enter to start picking the lock...")
+    input()
+    print("Starting lockpicking...")
+    print()
+
     while lock.locked and not lock.jammed:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        rounds += 1
+        print(f"Attempt #{rounds}")
+        input("Press Enter to roll the dice...")
+        print("Rolling dice...")
+        time.sleep(2)
         result = lock.picking_lock(skill)
-        print(result)
         if lock.jammed:
             print("Lock is jammed. Cannot pick.")
             break
         if not lock.locked:
             print("Lock picked successfully!")
             break
+        print("Lock status: ", lock.lock_status())
+        print(f"Current successes: {lock.successes}, Current failures: {lock.failures}")
+        input("Press Enter to continue...")
         print("Lock is still locked. Trying again...")
         print()
-        # Simulate a pause between attempts
-        time.sleep(3)  # Uncomment if you want to add a delay between attempts
-        # Note: The above example usage is for demonstration purposes and may not be suitable for all contexts.
+
+
 # The code simulates a lockpicking scenario where the player rolls dice to attempt to pick a lock.
 # It includes checks for critical failures, successes, and the overall status of the lock.
 # The lockpicking process continues until the lock is either picked successfully or jammed.
